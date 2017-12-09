@@ -60,7 +60,7 @@ def _find_devices():
     """
     ret = []
 
-    logger.info('Looking for devices....')
+    logger.info('Recherche des périphériques....')
 
     if pyusb1:
         for d in usb.core.find(idVendor=USB_VID, idProduct=USB_PID, find_all=1,
@@ -166,7 +166,7 @@ class CfUsb:
                     # Normal, the read was empty
                     pass
                 else:
-                    raise IOError('Crazyflie disconnected')
+                    raise IOError('Crazyflie déconnecté')
             except AttributeError as e:
                 # pyusb < 1.0 doesn't implement getting the underlying error
                 # number and it seems as if it's not possible to detect

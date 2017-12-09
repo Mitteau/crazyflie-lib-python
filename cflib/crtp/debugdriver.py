@@ -440,7 +440,7 @@ class _PacketHandlingThread(Thread):
                     'Aucune réponse à aucune donnée, envoi d\'une erreur de la liaison'
                     ' en %d tentatives', self.nowAnswerCounter)
                 if (self.nowAnswerCounter == 0):
-                    self.linkErrorCallback('Aucune réponse, normal'
+                    self.linkErrorCallback('Aucune réponse, normal')
             else:
                 if (pk.port == 0xFF):
                     self._handle_bootloader(pk)

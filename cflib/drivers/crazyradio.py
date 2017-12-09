@@ -118,7 +118,7 @@ class Crazyradio:
             try:
                 device = _find_devices()[devid]
             except Exception:
-                raise Exception('Cannot find a Crazyradio Dongle')
+                raise Exception('Il n\'y a pas de clé USB radio')
 
         self.dev = device
 
@@ -134,10 +134,10 @@ class Crazyradio:
             self.version = float(self.dev.deviceVersion)
 
         if self.version < 0.3:
-            raise 'This driver requires Crazyradio firmware V0.3+'
+            raise 'Ce pilote nécessite le logiciel Crazyradio V0.3+'
 
         if self.version < 0.4:
-            logger.warning('You should update to Crazyradio firmware V0.4+')
+            logger.warning('Vous devriez actualiserver le logiciel Crazyradio V0.4+')
 
         # Reset the dongle to power up settings
         self.set_data_rate(self.DR_2MPS)
@@ -177,8 +177,7 @@ class Crazyradio:
     def set_address(self, address):
         """ Set the radio address to be used"""
         if len(address) != 5:
-            raise Exception('Crazyradio: the radio address shall be 5'
-                            ' bytes long')
+            raise Exception('Crazyradio: l\'adresse de la radio doit longue de 5 octets)'
         if address != self.current_address:
             _send_vendor_setup(self.handle, SET_RADIO_ADDRESS, 0, 0, address)
             self.current_address = address
