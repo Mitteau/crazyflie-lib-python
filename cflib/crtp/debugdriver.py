@@ -285,25 +285,24 @@ class DebugDriver(CRTPDriver):
         self._packet_handler.start()
 
     def scan_interface(self, address):
-        return [['debug://0/0', 'Normal connection'],
-                ['debug://0/1', 'Fail to connect'],
-                ['debug://0/2', 'Incomplete log TOC download'],
-                ['debug://0/3', 'Insert random delays on replies'],
-                ['debug://0/4',
-                 'Insert random delays on replies and random TOC CRCs'],
-                ['debug://0/5', 'Normal but random TOC CRCs'],
-                ['debug://0/6', 'Normal but empty I2C and OW mems']]
+        return [['debug://0/0', 'Connexion normale'],
+                ['debug://0/1', 'Connexion ratée'],
+                ['debug://0/2', 'Récupération incomplète de la TdM de télémétrie'],
+                ['debug://0/3', 'Insertion de délais aléatoires dans les réponses'],
+                ['debug://0/4', 'Insertion de délais aléatoires dans les réponses et de CRC aléatoires dans la TdM'],
+                ['debug://0/5', 'Normale mais CRC aléatoires pour la TdM'],
+                ['debug://0/6', 'Normale mais mémoires I2C et OW vides']]
 
     def get_status(self):
-        return 'Ok'
+        return 'Accord'
 
     def get_name(self):
-        return 'debug'
+        return 'Débogage'
 
     def connect(self, uri, linkQualityCallback, linkErrorCallback):
 
         if not re.search('^debug://', uri):
-            raise WrongUriType('Not a debug URI')
+            raise WrongUriType('Ce n\'est pas une URI de débogage')
 
         self._packet_handler.linkErrorCallback = linkErrorCallback
         self._packet_handler.linkQualityCallback = linkQualityCallback
@@ -360,7 +359,7 @@ class DebugDriver(CRTPDriver):
                            data=[0x00 for a in range(112)]))
 
         if (re.search('^debug://.*/6\Z', uri)):
-            logger.info('------------->Erasing memories on connect')
+            logger.info('------------->Effacement des mémoires à la connexion')
             for m in self._fake_mems:
                 m.erase()
 
@@ -395,7 +394,7 @@ class DebugDriver(CRTPDriver):
         self._packet_handler.handle_packet(pk)
 
     def close(self):
-        logger.info('Closing debugdriver')
+        logger.info('Fermeture du pilote de débogage')
         for f in self._packet_handler.fakeLoggingThreads:
             f.stop()
         if self.fakeConsoleThread:
@@ -438,11 +437,10 @@ class _PacketHandlingThread(Thread):
             if (self.inhibitAnswers):
                 self.nowAnswerCounter = self.nowAnswerCounter - 1
                 logger.debug(
-                    'Not answering with any data, will send link errori'
-                    ' in %d retries', self.nowAnswerCounter)
+                    'Aucune réponse à aucune donnée, envoi d\'une erreur de la liaison'
+                    ' en %d tentatives', self.nowAnswerCounter)
                 if (self.nowAnswerCounter == 0):
-                    self.linkErrorCallback('Nothing is answering, and it'
-                                           " shouldn't")
+                    self.linkErrorCallback('Aucune réponse, normal'
             else:
                 if (pk.port == 0xFF):
                     self._handle_bootloader(pk)
@@ -458,7 +456,7 @@ class _PacketHandlingThread(Thread):
                     self._handle_mem_access(pk)
                 else:
                     logger.warning(
-                        'Not handling incoming packets on port [%d]',
+                        'Pas de prise en compte des paquets entrants sur le port [%d]',
                         pk.port)
 
     def _handle_mem_access(self, pk):
@@ -473,7 +471,7 @@ class _PacketHandlingThread(Thread):
                 p_out.data = (1, len(self._fake_mems))
             if cmd == 2:
                 id = payload[0]
-                logger.info('Getting mem {}'.format(id))
+                logger.info('Récupération de mem {}'.format(id))
                 m = self._fake_mems[id]
                 p_out.data = struct.pack(
                     '<BBBIQ', 2, id, m.type, m.size, m.addr)
@@ -484,7 +482,7 @@ class _PacketHandlingThread(Thread):
             addr = struct.unpack('I', payload[0:4])[0]
             length = payload[4]
             status = 0
-            logger.info('MEM: Read {}bytes at 0x{:X} from memory {}'.format(
+            logger.info('MEM: Lecture de {}octets à 0x{:X} depuis la mémoire {}'.format(
                 length, addr, id))
             m = self._fake_mems[id]
             p_out = CRTPPacket()
@@ -498,7 +496,7 @@ class _PacketHandlingThread(Thread):
             id = cmd
             addr = struct.unpack('I', payload[0:4])[0]
             data = payload[4:]
-            logger.info('MEM: Write {}bytes at 0x{:X} to memory {}'.format(
+            logger.info('MEM: Écriture de {}octets à 0x{:X} depuis la mémoire {}'.format(
                 len(data), addr, id))
             m = self._fake_mems[id]
 
@@ -525,7 +523,7 @@ class _PacketHandlingThread(Thread):
                                  flashPages, flashStart)
             p.data += struct.pack('B' * 12, 0xA0A1A2A3A4A5)
             self._send_packet(p)
-            logging.info('Bootloader: Sending info back info')
+            logging.info('Chargeur: envoi de l\'info de retour')
         elif (cmd == 0x14):  # Upload buffer
             [page, addr] = struct.unpack('<HH', p.data[0:4])
         elif (cmd == 0x18):  # Flash page
@@ -534,9 +532,9 @@ class _PacketHandlingThread(Thread):
             p.data = struct.pack('<BBH', 0xFF, 0x18, 1)
             self._send_packet(p)
         elif (cmd == 0xFF):  # Reset to firmware
-            logger.info('Bootloader: Got reset command')
+            logger.info('Chargeur: reçu une commande de réinitialisation')
         else:
-            logger.warning('Bootloader: Unknown command 0x%02X', cmd)
+            logger.warning('Chargeur: commande inconnue 0x%02X', cmd)
 
     def _handle_debugmessage(self, pk):
         if (pk.channel == 0):
@@ -545,18 +543,18 @@ class _PacketHandlingThread(Thread):
                 newLinkQuality = struct.unpack('B', pk.data[1])[0]
                 self.linkQualityCallback(newLinkQuality)
             elif (cmd == 1):
-                self.linkErrorCallback('DebugDriver was forced to disconnect!')
+                self.linkErrorCallback('Pilote de débogage déconnecté !')
             else:
-                logger.warning('Debug port: Not handling cmd=%d on channel 0',
+                logger.warning('Port de débogage : pas de prise en compte de la commande cmd=%d sur le canal 0',
                                cmd)
         else:
-            logger.warning('Debug port: Not handling channel=%d',
+            logger.warning('Port de débogage : pas de prise en compte sur le canal=%d',
                            pk.channel)
 
     def _handle_toc_access(self, pk):
         chan = pk.channel
         cmd = pk.data[0]
-        logger.info('TOC access on port %d', pk.port)
+        logger.info('Accès à la TdM %d', pk.port)
         if (chan == 0):  # TOC Access
             cmd = pk.data[0]
             if (cmd == 0):  # Reqest variable info
@@ -565,11 +563,11 @@ class _PacketHandlingThread(Thread):
                 varIndex = 0
                 if (len(pk.data) > 1):
                     varIndex = pk.data[1]
-                    logger.debug('TOC[%d]: Requesting ID=%d', pk.port,
+                    logger.debug('TdM[%d]: Demande de ID=%d', pk.port,
                                  varIndex)
                 else:
-                    logger.debug('TOC[%d]: Requesting first index..surprise,'
-                                 ' it 0 !', pk.port)
+                    logger.debug('TdM[%d]: Demande du premier indice...surprise,'
+                                 ' c\'est 0 !', pk.port)
 
                 if (pk.port == CRTPPort.LOGGING):
                     entry = self.fakeLogToc[varIndex]
@@ -592,7 +590,7 @@ class _PacketHandlingThread(Thread):
                 elif (varIndex < 5):
                     self._send_packet(p)
                 else:
-                    logger.info('TOC: Doing incomplete TOC, stopping after'
+                    logger.info('TdM: TdM incomplète effectuée, arrêt ensuite'
                                 ' varIndex => 5')
 
             if (cmd == 1):  # TOC CRC32 request
@@ -608,9 +606,9 @@ class _PacketHandlingThread(Thread):
                     fakecrc = int(''.join(
                         random.choice('ABCDEF' + string.digits) for x in
                         range(8)), 16)
-                    logger.debug('Generated random TOC CRC: 0x%x', fakecrc)
-                logger.info('TOC[%d]: Requesting TOC CRC, sending back fake'
-                            ' stuff: %d', pk.port, len(self.fakeLogToc))
+                    logger.debug('CRC aléatoire généré pour la TdM : 0x%x', fakecrc)
+                logger.info('TdM[%d]: demande de CRC pour la TdM, envoi d\'un leurre'
+                            ' : %d', pk.port, len(self.fakeLogToc))
                 p = CRTPPacket()
                 p.set_header(pk.port, 0)
                 p.data = struct.pack('<BBIBB', 1, tocLen, fakecrc, 16, 24)
@@ -629,7 +627,7 @@ class _PacketHandlingThread(Thread):
                 self.fakeParamToc[varId]['vartype']][1]
             newvalue = struct.unpack(formatStr, pk.data[1:])[0]
             self.fakeParamToc[varId]['value'] = newvalue
-            logger.info('PARAM: New value [%s] for param [%d]', newvalue,
+            logger.info('PARAM: nouvelle valeur [%s] pour le paramètre [%d]', newvalue,
                         varId)
             # Send back the new value
             p = CRTPPacket()
@@ -645,13 +643,13 @@ class _PacketHandlingThread(Thread):
             formatStr = ParamTocElement.types[
                 self.fakeParamToc[varId]['vartype']][1]
             p.data += struct.pack(formatStr, self.fakeParamToc[varId]['value'])
-            logger.info('PARAM: Getting value for %d', varId)
+            logger.info('PARAM: obtention de la valeur de %d', varId)
             self._send_packet(p)
 
     def _handle_logging(self, pk):
         chan = pk.channel
         cmd = pk.data[0]
-        logger.debug('LOG: Chan=%d, cmd=%d', chan, cmd)
+        logger.debug('Télémétrie : canal=%d, cmd=%d', chan, cmd)
         if (chan == 0):  # TOC Access
             self._handle_toc_access(pk)
         elif (chan == 1):  # Settings access
@@ -659,7 +657,7 @@ class _PacketHandlingThread(Thread):
                 blockId = pk.data[1]
                 if blockId not in self._added_blocks:
                     self._added_blocks.append(blockId)
-                    logger.info('LOG:Adding block id=%d', blockId)
+                    logger.info('Télémétrie : ajout du bloc id=%d', blockId)
                     listofvars = pk.data[3:]
                     fakeThread = _FakeLoggingDataThread(self.queue, blockId,
                                                         listofvars,
@@ -677,10 +675,10 @@ class _PacketHandlingThread(Thread):
                     p.data = struct.pack('<BBB', 0, blockId, errno.EEXIST)
                     self._send_packet(p)
             if (cmd == 1):
-                logger.warning('LOG: Appending block not implemented!')
+                logger.warning('Télémétrie : allongement d\'un bloc non installé !')
             if (cmd == 2):
                 blockId = pk.data[1]
-                logger.info('LOG: Should delete block %d', blockId)
+                logger.info('Télémétrie : devrait supprimer le bloc %d', blockId)
                 success = False
                 for fb in self.fakeLoggingThreads:
                     if (fb.blockId == blockId):
@@ -691,17 +689,17 @@ class _PacketHandlingThread(Thread):
                         p.set_header(5, 1)
                         p.data = struct.pack('<BBB', cmd, blockId, 0x00)
                         self._send_packet(p)
-                        logger.info('LOG: Deleted block=%d', blockId)
+                        logger.info('Télémétrie : bloc=%d supprimé', blockId)
                         success = True
                 if (success is False):
-                    logger.warning('LOG: Could not delete block=%d, not found',
+                    logger.warning('Télémétrie : impossible de supprimer le bloc=%d, qui est introuvable',
                                    blockId)
                     # TODO: Send back error code
 
             if (cmd == 3):
                 blockId = pk.data[1]
                 period = pk.data[2] * 10  # Sent as multiple of 10 ms
-                logger.info('LOG:Starting block %d', blockId)
+                logger.info('Télémétrie : démarrage du bloc %d', blockId)
                 success = False
                 for fb in self.fakeLoggingThreads:
                     if (fb.blockId == blockId):
@@ -711,15 +709,15 @@ class _PacketHandlingThread(Thread):
                         p.set_header(5, 1)
                         p.data = struct.pack('<BBB', cmd, blockId, 0x00)
                         self._send_packet(p)
-                        logger.info('LOG:Started block=%d', blockId)
+                        logger.info('Télémétrie : bloc=%d démarré', blockId)
                         success = True
                 if (success is False):
-                    logger.info('LOG:Could not start block=%d, not found',
+                    logger.info('Télémétrie : impossible de démarrer le bloc=%d, qui est introuvable',
                                 blockId)
                     # TODO: Send back error code
             if (cmd == 4):
                 blockId = pk.data[1]
-                logger.info('LOG:Pausing block %d', blockId)
+                logger.info('Télémétrie : pause du bloc %d', blockId)
                 success = False
                 for fb in self.fakeLoggingThreads:
                     if (fb.blockId == blockId):
@@ -728,22 +726,22 @@ class _PacketHandlingThread(Thread):
                         p.set_header(5, 1)
                         p.data = struct.pack('<BBB', cmd, blockId, 0x00)
                         self._send_packet(p)
-                        logger.info('LOG:Pause block=%d', blockId)
+                        logger.info('Télémétrie : pause du bloc %d', blockId)
                         success = True
                 if (success is False):
-                    logger.warning('LOG:Could not pause block=%d, not found',
+                    logger.warning('Télémétrie : impossible de stopper le bloc=%d, qui est introuvable',
                                    blockId)
                     # TODO: Send back error code
             if (cmd == 5):
-                logger.info('LOG: Reset logging, but doing nothing')
+                logger.info('Télémétrie : relance, ne fait rien')
                 p = CRTPPacket()
                 p.set_header(5, 1)
                 p.data = struct.pack('<BBB', cmd, 0x00, 0x00)
                 self._send_packet(p)
 
         elif (chan > 1):
-            logger.warning('LOG: Uplink packets with channels > 1 not'
-                           ' supported!')
+            logger.warning('Télémétrie : lier les paquets aux canaux > 1 non'
+                           ' supporté !')
 
     def _send_packet(self, pk):
         # Do not delay log data
@@ -751,7 +749,7 @@ class _PacketHandlingThread(Thread):
                 pk.channel != 0x02):
             # Calculate a delay between 0ms and 250ms
             delay = random.randint(0, 250) / 1000.0
-            logger.debug('Delaying answer %.2fms', delay * 1000)
+            logger.debug('Retarder la réponse  %.2fms', delay * 1000)
             time.sleep(delay)
         self.queue.put(pk)
 
@@ -774,7 +772,7 @@ class _FakeLoggingDataThread(Thread):
         self.setName('Fakelog block=%d' % blockId)
         self.shouldQuit = False
 
-        logging.info('FakeDataLoggingThread created for blockid=%d', blockId)
+        logging.info('"FakeDataLoggingThread" créé pour le bloc blockid=%d', blockId)
         i = 0
         while (i < len(listofvars)):
             varType = listofvars[i]
@@ -782,7 +780,7 @@ class _FakeLoggingDataThread(Thread):
             var_fetch_as = (varType & 0xFF)
             if (var_stored_as > 0):
                 addr = struct.unpack('<I', listofvars[i + 1:i + 5])
-                logger.debug('FakeLoggingThread: We should log a memory addr'
+                logger.debug('FakeLoggingThread : on devrait enregistrer une adresse mémoire'
                              ' 0x%04X', addr)
                 self.fakeLoggingData.append([memlogging[var_fetch_as],
                                              memlogging[var_fetch_as]['min'],
@@ -790,8 +788,8 @@ class _FakeLoggingDataThread(Thread):
                 i = i + 5
             else:
                 varId = listofvars[i]
-                logger.debug('FakeLoggingThread: We should log variable from'
-                             ' TOC: id=%d, type=0x%02X', varId, varType)
+                logger.debug('FakeLoggingThread: on devrait enregistrer une variable de la'
+                             ' TdM : id=%d, type=0x%02X', varId, varType)
                 for t in self.fakeLogToc:
                     if (varId == t['varid']):
                         # Each touple will have var data and current fake value
@@ -800,12 +798,12 @@ class _FakeLoggingDataThread(Thread):
 
     def _enable_logging(self):
         self.shouldLog = True
-        logging.info('_FakeLoggingDataThread: Enable thread [%s] at period %d',
+        logging.info('_FakeLoggingDataThread : Activer le thread [%s] à la période %d',
                      self.getName(), self.period)
 
     def _disable_logging(self):
         self.shouldLog = False
-        logging.info('_FakeLoggingDataThread: Disable thread [%s]',
+        logging.info('_FakeLoggingDataThread : désactiver le thread  [%s]',
                      self.getName())
 
     def stop(self):
@@ -871,7 +869,7 @@ class FakeConsoleThread(Thread):
 
             # Copy of what is sent from the module, but note that only
             # the GPGGA message is being simulated, the others are fixed...
-            self._send_text('Time is now %s\n' % datetime.now())
+            self._send_text('L\'heure est maintenant %s\n' % datetime.now())
             self._send_text('$GPVTG,,T,,M,0.386,N,0.716,K,A*2E\n')
             self._send_text('$GPGGA,135544.0')
             self._send_text('0,%s,N,%s,E,1,04,2.62,3.6,M,%s,M,,*58\n' % (

@@ -69,7 +69,7 @@ class Commander():
         be sent to the copter
         """
         if thrust > 0xFFFF or thrust < 0:
-            raise ValueError('Thrust must be between 0 and 0xFFFF')
+            raise ValueError('la poussée doit être entre 0 et 0xFFF')
 
         if self._x_mode:
             roll, pitch = 0.707 * (roll - pitch), 0.707 * (roll + pitch)

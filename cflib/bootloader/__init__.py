@@ -111,8 +111,8 @@ class Bootloader:
             elif self.protocol_version == BootVersion.CF2_PROTO_VER:
                 self._cload.request_info_update(TargetTypes.NRF51)
             else:
-                print('Bootloader protocol 0x{:X} not '
-                      'supported!'.self.protocol_version)
+                print('Le protocole chargeur 0x{:X} n\'est pas '
+                      'supporté !'.self.protocol_version)
 
         return started
 
@@ -138,7 +138,7 @@ class Bootloader:
     def flash(self, filename, targets):
         for target in targets:
             if TargetTypes.from_string(target) not in self._cload.targets:
-                print('Target {} not found by bootloader'.format(target))
+                print('La cible {} n\'a pas été trouvée par le chargeur'.format(target))
                 return False
 
         files_to_flash = ()
@@ -158,7 +158,7 @@ class Bootloader:
                 zip_targets = self._extract_zip_targets(files_for_platform)
             except KeyError as e:
                 print(e)
-                print('No manifest.json in {}'.format(filename))
+                print('Pas de fichier manifest.json dans {}'.format(filename))
                 return
 
             try:
@@ -178,13 +178,13 @@ class Bootloader:
                             'target'].start_page
                         files_to_flash += (file_to_flash,)
             except KeyError as e:
-                print('Could not find a file for {} in {}'.format(
+                print('Impossible de trouver un fichier pour {} dans {}'.format(
                     current_target, filename))
                 return False
 
         else:
             if len(targets) != 1:
-                print('Not an archive, must supply one target to flash')
+                print('Ce n\'est pas une archive, fournir une cible pour flasher la mémoire')
             else:
                 file_to_flash = {}
                 file_to_flash['type'] = 'binary'
@@ -265,11 +265,11 @@ class Bootloader:
 
         if self.progress_cb:
             self.progress_cb(
-                '({}/{}) Starting...'.format(current_file_number, total_files),
+                '({}/{}) Démarrage...'.format(current_file_number, total_files),
                 int(progress))
         else:
             sys.stdout.write(
-                'Flashing {} of {} to {} ({}): '.format(
+                'Flash {} de {} vers {} ({}): '.format(
                     current_file_number, total_files,
                     TargetTypes.to_string(t_data.id), target['type']))
             sys.stdout.flush()
@@ -278,16 +278,16 @@ class Bootloader:
                          t_data.page_size):
             if self.progress_cb:
                 self.progress_cb(
-                    'Error: Not enough space to flash the image file.',
+                    'Erreur : place insuffisante pour flasher le fichier image.',
                     int(progress))
             else:
-                print('Error: Not enough space to flash the image file.')
+                print('Erreur : place insuffisante pour flasher le fichier image.')
             raise Exception()
 
         if not self.progress_cb:
-            logger.info(('%d bytes (%d pages) ' % (
+            logger.info(('%d octets (%d pages) ' % (
                 (len(image) - 1), int(len(image) / t_data.page_size) + 1)))
-            sys.stdout.write(('%d bytes (%d pages) ' % (
+            sys.stdout.write(('%d octets (%d pages) ' % (
                 (len(image) - 1), int(len(image) / t_data.page_size) + 1)))
             sys.stdout.flush()
 
@@ -307,7 +307,7 @@ class Bootloader:
 
             if self.progress_cb:
                 progress += factor
-                self.progress_cb('({}/{}) Uploading buffer to {}...'.format(
+                self.progress_cb('({}/{}) Chargement du tampon vers {}...'.format(
                     current_file_number,
                     total_files,
                     TargetTypes.to_string(t_data.id)),
@@ -320,7 +320,7 @@ class Bootloader:
             # Flash when the complete buffers are full
             if ctr >= t_data.buffer_pages:
                 if self.progress_cb:
-                    self.progress_cb('({}/{}) Writing buffer to {}...'.format(
+                    self.progress_cb('({}/{}) Écriture du tampon vers {}...'.format(
                         current_file_number,
                         total_files,
                         TargetTypes.to_string(t_data.id)),
@@ -334,12 +334,12 @@ class Bootloader:
                                                ctr):
                     if self.progress_cb:
                         self.progress_cb(
-                            'Error during flash operation (code %d)'.format(
+                            'Erreur pendant l\'opération de flash (code %d)'.format(
                                 self._cload.error_code),
                             int(progress))
                     else:
-                        print('\nError during flash operation (code %d). '
-                              'Maybe wrong radio link?' %
+                        print('\nErreur pendant l\'opération de flash (code %d). '
+                              'Peut-être une mauvaise liaison radio ou USB ?' %
                               self._cload.error_code)
                     raise Exception()
 
@@ -347,7 +347,7 @@ class Bootloader:
 
         if ctr > 0:
             if self.progress_cb:
-                self.progress_cb('({}/{}) Writing buffer to {}...'.format(
+                self.progress_cb('({}/{}) Écriture du tampon vers {}{}...'.format(
                     current_file_number,
                     total_files,
                     TargetTypes.to_string(t_data.id)),
@@ -361,17 +361,17 @@ class Bootloader:
                      (ctr - 1)), ctr):
                 if self.progress_cb:
                     self.progress_cb(
-                        'Error during flash operation (code %d)'.format(
+                        'Erreur pendant l\'opération de flash (code %d)'.format(
                             self._cload.error_code),
                         int(progress))
                 else:
-                    print('\nError during flash operation (code %d). Maybe'
-                          ' wrong radio link?' % self._cload.error_code)
+                    print('\nErreur pendant l\'opération de flash (code %d).'
+                          'Peut-être une mauvaise liaison radio ?' % self._cload.error_code)
                 raise Exception()
 
         if self.progress_cb:
             self.progress_cb(
-                '({}/{}) Flashing done!'.format(current_file_number,
+                '({}/{}) Écriture flash effectuée !'.format(current_file_number,
                                                 total_files),
                 int(100))
         else:

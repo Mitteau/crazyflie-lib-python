@@ -61,7 +61,7 @@ class TargetTypes:
             return 'stm32'
         if target == TargetTypes.NRF51:
             return 'nrf51'
-        return 'Unknown'
+        return 'Inconnu'
 
     @staticmethod
     def from_string(name):
@@ -86,11 +86,11 @@ class Target:
 
     def __str__(self):
         ret = ''
-        ret += 'Target info: {} (0x{:X})\n'.format(
+        ret += 'Information sur la cible : {} (0x{:X})\n'.format(
             TargetTypes.to_string(self.id), self.id)
-        ret += 'Flash pages: %d | Page size: %d | Buffer pages: %d |' \
-               ' Start page: %d\n' % (self.flash_pages, self.page_size,
+        ret += 'pages à transférer dans flash : %d | taille de la page : %d | taille du tampon : %d |' \
+               ' page de début: %d\n' % (self.flash_pages, self.page_size,
                                       self.buffer_pages, self.start_page)
-        ret += '%d KBytes of flash available for firmware image.' % (
+        ret += '%d Koctets of flash disponibles pour l\'image du logiciel de contrôle.' % (
             (self.flash_pages - self.start_page) * self.page_size / 1024)
         return ret

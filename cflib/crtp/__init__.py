@@ -60,7 +60,7 @@ def scan_interfaces(address=None):
     found = []
     for driverClass in CLASSES:
         try:
-            logger.debug('Scanning: %s', driverClass)
+            logger.debug('Balayage : %s', driverClass)
             instance = driverClass()
             found = instance.scan_interface(address)
             available += found

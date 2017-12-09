@@ -51,7 +51,7 @@ class UdpDriver(CRTPDriver):
     def connect(self, uri, linkQualityCallback, linkErrorCallback):
         # check if the URI is a radio URI
         if not re.search('^udp://', uri):
-            raise WrongUriType('Not an UDP URI')
+            raise WrongUriType('Pas une URI pour UDP')
 
         self.queue = queue.Queue()
         self.socket = socket(socket.AF_INET, socket.SOCK_DGRAM)

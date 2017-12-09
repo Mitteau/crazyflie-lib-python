@@ -151,12 +151,12 @@ class RadioDriver(CRTPDriver):
 
         # check if the URI is a radio URI
         if not re.search('^radio://', uri):
-            raise WrongUriType('Not a radio URI')
+            raise WrongUriType('Pas une URI radio')
 
         # Open the USB dongle
         if not re.search('^radio://([0-9]+)((/([0-9]+))'
                          '((/(250K|1M|2M))?(/([A-F0-9]+))?)?)?$', uri):
-            raise WrongUriType('Wrong radio URI format!')
+            raise WrongUriType('Mauvais format d\'URI radio! ')
 
         uri_data = re.search('^radio://([0-9]+)((/([0-9]+))'
                              '((/(250K|1M|2M))?(/([A-F0-9]+))?)?)?$', uri)
@@ -187,13 +187,13 @@ class RadioDriver(CRTPDriver):
                                                 datarate,
                                                 address)
         else:
-            raise Exception('Link already open!')
+            raise Exception('Liaison déjà ouverte !')
 
         with self._radio_manager as cradio:
             if cradio.version >= 0.4:
                 cradio.set_arc(10)
             else:
-                logger.warning('Radio version <0.4 will be obsoleted soon!')
+                logger.warning('Les version de radio <0.4 seront bientôt obsolètes!')
 
         # Prepare the inter-thread communication queue
         self.in_queue = queue.Queue()
@@ -238,8 +238,8 @@ class RadioDriver(CRTPDriver):
             self.out_queue.put(pk, True, 2)
         except queue.Full:
             if self.link_error_callback:
-                self.link_error_callback('RadioDriver: Could not send packet'
-                                         ' to copter')
+                self.link_error_callback('Pilote de radio: ne peut envoyer de paquets'
+                                         ' au copter')
 
     def pause(self):
         self._thread.stop()
@@ -329,7 +329,7 @@ class RadioDriver(CRTPDriver):
             # FIXME: implements serial number in the Crazyradio driver!
             serial = 'N/A'
 
-            logger.info('v%s dongle with serial %s found', cradio.version,
+            logger.info('la clé v%s de numéro de série %s a été trouvée', cradio.version,
                         serial)
             found = []
 
@@ -375,9 +375,9 @@ class RadioDriver(CRTPDriver):
 
             radio_manager.close()
 
-            return 'Crazyradio version {}'.format(ver)
+            return 'Version {} de la Crazyradio'.format(ver)
         except Exception:
-            return 'Crazyradio not found'
+            return 'Crazyradio introuvable'
 
     def get_name(self):
         return 'radio'
@@ -470,13 +470,13 @@ class _RadioDriverThread(threading.Thread):
                     import traceback
 
                     self._link_error_callback(
-                        'Error communicating with crazy radio ,it has '
-                        'probably been unplugged!\nException:%s\n\n%s' % (
+                        'Erreur de communication vers la crazyradio, elle a '
+                        'probablement été retirée!\nException : %s\n\n%s' % (
                             e, traceback.format_exc()))
 
             # Analyse the in data packet ...
             if ackStatus is None:
-                logger.info('Dongle reported ACK status == None')
+                logger.info('Aucun rapport de bonne réception de la clé')
                 continue
 
             if (self._link_quality_callback is not None):
@@ -495,7 +495,7 @@ class _RadioDriverThread(threading.Thread):
                     self._retry_before_disconnect - 1
                 if (self._retry_before_disconnect == 0 and
                         self._link_error_callback is not None):
-                    self._link_error_callback('Too many packets lost')
+                    self._link_error_callback('Trop de paquets perdus')
                 continue
             self._retry_before_disconnect = \
                 _RadioDriverThread.TRIES_BEFORE_DISCON

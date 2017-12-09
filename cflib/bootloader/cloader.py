@@ -295,7 +295,7 @@ class Cloader:
             m = pk.datat[2:]
 
             if (len(m) % 2) != 0:
-                raise Exception('Malformed flash mapping packet')
+                raise Exception('Paquet de tranfert flash mal formé')
 
             self.mapping = []
             page = 0

@@ -130,30 +130,30 @@ class Crazyflie():
 
         # Connect callbacks to logger
         self.disconnected.add_callback(
-            lambda uri: logger.info('Callback->Disconnected from [%s]', uri))
+            lambda uri: logger.info('Rappel->Déconnecté de[%s]', uri))
         self.disconnected.add_callback(self._disconnected)
         self.link_established.add_callback(
-            lambda uri: logger.info('Callback->Connected to [%s]', uri))
+            lambda uri: logger.info('Rappel->Connecté à[%s]', uri))
         self.connection_lost.add_callback(
             lambda uri, errmsg: logger.info(
-                'Callback->Connection lost to [%s]: %s', uri, errmsg))
+                'Rappel->Connexion perdue à [%s]: %s', uri, errmsg))
         self.connection_failed.add_callback(
             lambda uri, errmsg: logger.info(
-                'Callback->Connected failed to [%s]: %s', uri, errmsg))
+                'Rappel->Echec de connexion à [%s]: %s', uri, errmsg))
         self.connection_requested.add_callback(
             lambda uri: logger.info(
-                'Callback->Connection initialized[%s]', uri))
+                'Rappel->Connexion démarrée[%s]', uri))
         self.connected.add_callback(
             lambda uri: logger.info(
-                'Callback->Connection setup finished [%s]', uri))
-
+                'Rappel->Mise en route de la connexion terminée[%s]', uri))
+                
     def _disconnected(self, link_uri):
         """ Callback when disconnected."""
         self.connected_ts = None
 
     def _start_connection_setup(self):
         """Start the connection setup by refreshing the TOCs"""
-        logger.info('We are connected[%s], request connection setup',
+        logger.info('Connecté à [%s], demande le paramétrage de la connexion',
                     self.link_uri)
         self.log.refresh_toc(self._log_toc_updated_cb, self._toc_cache)
 

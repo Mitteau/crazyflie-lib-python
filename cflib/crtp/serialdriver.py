@@ -45,12 +45,12 @@ class SerialDriver(CRTPDriver):
     def connect(self, uri, linkQualityCallback, linkErrorCallback):
         # check if the URI is a serial URI
         if not re.search('^serial://', uri):
-            raise WrongUriType('Not a serial URI')
+            raise WrongUriType('Ce n\'est pas une URI de transmission série')
 
         # Check if it is a valid serial URI
         uriRe = re.search('^serial://([a-z A-Z 0-9]+)/?([0-9]+)?$', uri)
         if not uriRe:
-            raise Exception('Invalid serial URI')
+            raise Exception('Cette URI de transmission série n\'est pas valable')
 
     def get_name(self):
         return 'serial'

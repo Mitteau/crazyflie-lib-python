@@ -129,8 +129,8 @@ class CRTPPacket(object):
         elif sys.version_info >= (3,) and type(data) == bytes:
             self._data = bytearray(data)
         else:
-            raise Exception('Data must be bytearray, string, list or tuple,'
-                            ' not {}'.format(type(data)))
+            raise Exception('Les données doivent être soit des "bytearray", soit des chaînes, listes ou tuples,'
+                            ' pas des {}'.format(type(data)))
 
     def _get_data_l(self):
         """Get the data in the packet as a list"""
