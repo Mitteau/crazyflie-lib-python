@@ -133,7 +133,7 @@ class LogVariable():
         return (self.fetch_as | (self.stored_as << 4))
 
     def __str__(self):
-        return ('LogVariable: name=%s, store=%s, fetch=%s' %
+        return ('Variable de télémétrie : nom=%s, type=%s, modifiable(?)=%s' %
                 (self.name, LogTocElement.get_cstring_from_id(self.stored_as),
                  LogTocElement.get_cstring_from_id(self.fetch_as)))
 
@@ -217,13 +217,13 @@ class LogConfig(object):
         pk.data = (CMD_CREATE_BLOCK, self.id)
         for var in self.variables:
             if (var.is_toc_variable() is False):  # Memory location
-                logger.debug('Logging to raw memory %d, 0x%04X',
+                logger.debug('Connexion à la mémoire brute %d, 0x%04X',
                              var.get_storage_and_fetch_byte(), var.address)
                 pk.data.append(struct.pack('<B',
                                            var.get_storage_and_fetch_byte()))
                 pk.data.append(struct.pack('<I', var.address))
             else:  # Item in TOC
-                logger.debug('Adding %s with id=%d and type=0x%02X',
+                logger.debug('Ajout de %s avec id=%d et type=0x%02X',
                              var.name,
                              self.cf.log.toc.get_element_id(
                                  var.name), var.get_storage_and_fetch_byte())
@@ -237,9 +237,9 @@ class LogConfig(object):
         if (self.cf.link is not None):
             if (self._added is False):
                 self.create()
-                logger.debug('First time block is started, add block')
+                logger.debug('Bloc démarré pour la première fois, ajouté')
             else:
-                logger.debug('Block already registered, starting logging'
+                logger.debug('Bloc déjà enregistré, début d\'enregistrement des variables'
                              ' for id=%d', self.id)
                 pk = CRTPPacket()
                 pk.set_header(5, CHAN_SETTINGS)
@@ -251,9 +251,9 @@ class LogConfig(object):
         """Stop the logging for this entry"""
         if (self.cf.link is not None):
             if (self.id is None):
-                logger.warning('Stopping block, but no block registered')
+                logger.warning('Arrêt de bloc mais pas de bloc enregistré')
             else:
-                logger.debug('Sending stop logging for block id=%d', self.id)
+                logger.debug('Envoi d\'un signal d\'arrêt au bloc id=%d', self.id)
                 pk = CRTPPacket()
                 pk.set_header(5, CHAN_SETTINGS)
                 pk.data = (CMD_STOP_LOGGING, self.id)
@@ -264,9 +264,9 @@ class LogConfig(object):
         """Delete this entry in the Crazyflie"""
         if (self.cf.link is not None):
             if (self.id is None):
-                logger.warning('Delete block, but no block registered')
+                logger.warning('Suppression de bloc mais pas de bloc enregistré')
             else:
-                logger.debug('LogEntry: Sending delete logging for block id=%d'
+                logger.debug('LogEntry : signal de suppression pour le bloc id=%d'
                              % self.id)
                 pk = CRTPPacket()
                 pk.set_header(5, CHAN_SETTINGS)
@@ -308,7 +308,7 @@ class LogTocElement:
         for key in list(LogTocElement.types.keys()):
             if (LogTocElement.types[key][0] == name):
                 return key
-        raise KeyError('Type [%s] not found in LogTocElement.types!' % name)
+        raise KeyError('Le type [%s] n\'a pas été trouvé dans LogTocElement.types !' % name)
 
     @staticmethod
     def get_cstring_from_id(ident):
@@ -316,7 +316,7 @@ class LogTocElement:
         try:
             return LogTocElement.types[ident][0]
         except KeyError:
-            raise KeyError('Type [%d] not found in LogTocElement.types'
+            raise KeyError('Le type [%s] n\'a pas été trouvé dans LogTocElement.types !'
                            '!' % ident)
 
     @staticmethod
@@ -325,7 +325,7 @@ class LogTocElement:
         try:
             return LogTocElement.types[ident][2]
         except KeyError:
-            raise KeyError('Type [%d] not found in LogTocElement.types'
+            raise KeyError('Le type [%s] n\'a pas été trouvé dans LogTocElement.types !'
                            '!' % ident)
 
     @staticmethod
@@ -335,7 +335,7 @@ class LogTocElement:
             return LogTocElement.types[ident][1]
         except KeyError:
             raise KeyError(
-                'Type [%d] not found in LogTocElement.types!' % ident)
+                'Le type [%s] n\'a pas été trouvé dans LogTocElement.types !' % ident)
 
     def __init__(self, data=None):
         """TocElement creator. Data is the binary payload of the element."""
@@ -361,11 +361,11 @@ class Log():
     # some of the text messages will look very strange
     # in the UI, so they are redefined here
     _err_codes = {
-        errno.ENOMEM: 'No more memory available',
-        errno.ENOEXEC: 'Command not found',
-        errno.ENOENT: 'No such block id',
-        errno.E2BIG: 'Block too large',
-        errno.EEXIST: 'Block already exists'
+        errno.ENOMEM: 'Mémoire insuffisante',
+        errno.ENOEXEC: 'La commandande n\'existe pas',
+        errno.ENOENT: 'Pas de bloc avec l\'identité donnée',
+        errno.E2BIG: 'Bloc trop grand',
+        errno.EEXIST: 'Le bloc existe déjà'
     }
 
     def __init__(self, crazyflie=None):
@@ -397,7 +397,7 @@ class Log():
         connected when calling this method, otherwise it will fail."""
 
         if not self.cf.link:
-            logger.error('Cannot add configs without being connected to a '
+            logger.error('On ne peut ajouter de configurations sans être connecté à un '
                          'Crazyflie!')
             return
 
@@ -408,9 +408,9 @@ class Log():
             var = self.toc.get_element_by_complete_name(name)
             if not var:
                 logger.warning(
-                    '%s not in TOC, this block cannot be used!', name)
+                    '%s n\'est pas dans la TdM, le bloc ne peut être utilisé !', name)
                 logconf.valid = False
-                raise KeyError('Variable {} not in TOC'.format(name))
+                raise KeyError('La variable {} n\'est pas dans la TdM'.format(name))
             # Now that we know what type this variable has, add it to the log
             # config again with the correct type
             logconf.add_variable(name, var.ctype)
@@ -426,10 +426,10 @@ class Log():
             if var.is_toc_variable():
                 if (self.toc.get_element_by_complete_name(var.name) is None):
                     logger.warning(
-                        'Log: %s not in TOC, this block cannot be used!',
+                        'Télémétrie : %s n\'est pas dans la TdM, le bloc ne peut être utilisé !',
                         var.name)
                     logconf.valid = False
-                    raise KeyError('Variable {} not in TOC'.format(var.name))
+                    raise KeyError('La variable {} n\'est pas dans la TdM'.format(var.name))
 
         if (size <= MAX_LOG_DATA_PACKET_SIZE and
                 (logconf.period > 0 and logconf.period < 0xFF)):
@@ -442,8 +442,8 @@ class Log():
         else:
             logconf.valid = False
             raise AttributeError(
-                'The log configuration is too large or has an invalid '
-                'parameter')
+                'La configuration de télémétrie est trop longue ou bien '
+                'contient un paramètre invalide')
 
     def refresh_toc(self, refresh_done_callback, toc_cache):
         """Start refreshing the table of loggale variables"""
@@ -477,7 +477,7 @@ class Log():
                 if (block is not None):
                     if error_status == 0 or error_status == errno.EEXIST:
                         if not block.added:
-                            logger.debug('Have successfully added id=%d', id)
+                            logger.debug('id=%d ajoutée avec succès', id)
 
                             pk = CRTPPacket()
                             pk.set_header(5, CHAN_SETTINGS)
@@ -487,24 +487,24 @@ class Log():
                             block.added = True
                     else:
                         msg = self._err_codes[error_status]
-                        logger.warning('Error %d when adding id=%d (%s)',
+                        logger.warning('Erreur %d lors de l\'ajout de id=%d (%s)',
                                        error_status, id, msg)
                         block.err_no = error_status
                         block.added_cb.call(False)
                         block.error_cb.call(block, msg)
 
                 else:
-                    logger.warning('No LogEntry to assign block to !!!')
+                    logger.warning('Pas d\'entrée assignée à ce bloc !!!')
             if (cmd == CMD_START_LOGGING):
                 if (error_status == 0x00):
-                    logger.info('Have successfully started logging for id=%d',
+                    logger.info('Démarrage réussi de la télémétrie de id=%d',
                                 id)
                     if block:
                         block.started = True
 
                 else:
                     msg = self._err_codes[error_status]
-                    logger.warning('Error %d when starting id=%d (%s)',
+                    logger.warning('Erreur %d lors du démarrage de id=%d (%s)',
                                    error_status, id, msg)
                     if block:
                         block.err_no = error_status
@@ -517,7 +517,7 @@ class Log():
 
             if (cmd == CMD_STOP_LOGGING):
                 if (error_status == 0x00):
-                    logger.info('Have successfully stopped logging for id=%d',
+                    logger.info('Succès de l'\'arrêt de id=%d',
                                 id)
                     if block:
                         block.started = False
@@ -526,7 +526,7 @@ class Log():
                 # Accept deletion of a block that isn't added. This could
                 # happen due to timing (i.e add/start/delete in fast sequence)
                 if error_status == 0x00 or error_status == errno.ENOENT:
-                    logger.info('Have successfully deleted id=%d', id)
+                    logger.info('Succès de la suppression de id=%d', id)
                     if block:
                         block.started = False
                         block.added = False
@@ -534,7 +534,7 @@ class Log():
             if (cmd == CMD_RESET_LOGGING):
                 # Guard against multiple responses due to re-sending
                 if not self.toc:
-                    logger.debug('Logging reset, continue with TOC download')
+                    logger.debug('Relance de la télémétrie, le chargement de la TdM se poursuit')
                     self.log_blocks = []
 
                     self.toc = Toc()
@@ -555,4 +555,4 @@ class Log():
             if (block is not None):
                 block.unpack_log_data(logdata, timestamp)
             else:
-                logger.warning('Error no LogEntry to handle id=%d', id)
+                logger.warning('Erreur : pas d\'entrée pour traiter id=%d', id)

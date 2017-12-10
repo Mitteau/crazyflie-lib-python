@@ -76,7 +76,7 @@ class TocCache():
                                        object_hook=self._decoder)
                 cache.close()
             except Exception as exp:
-                logger.warning('Error while parsing cache file [%s]:%s',
+                logger.warning('Erreur dans l\'analyse du fichier de cache [%s] :%s',
                                hit, str(exp))
 
         return cache_data
@@ -90,13 +90,13 @@ class TocCache():
                 cache.write(json.dumps(toc, indent=2,
                                        default=self._encoder))
                 cache.close()
-                logger.info('Saved cache to [%s]', filename)
+                logger.info('Cache sauvegardé dans [%s]', filename)
                 self._cache_files += [filename]
             except Exception as exp:
-                logger.warning('Could not save cache to file [%s]: %s',
+                logger.warning('Le cache n\'a pu être sauvegardé dans le fichier [%s]: %s',
                                filename, str(exp))
         else:
-            logger.warning('Could not save cache, no writable directory')
+           logger.warning('Impossible de sauver le cache, répertoire non enregistrable')
 
     def _encoder(self, obj):
         """ Encode a toc element leaf-node """
@@ -107,7 +107,7 @@ class TocCache():
                 'ctype': obj.ctype,
                 'pytype': obj.pytype,
                 'access': obj.access}
-        raise TypeError(repr(obj) + ' is not JSON serializable')
+        raise TypeError(repr(obj) + ' n\'est pas sérialisable selon shéma JSON')
 
     def _decoder(self, obj):
         """ Decode a toc element leaf-node """

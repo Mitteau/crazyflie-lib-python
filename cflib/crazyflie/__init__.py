@@ -130,22 +130,22 @@ class Crazyflie():
 
         # Connect callbacks to logger
         self.disconnected.add_callback(
-            lambda uri: logger.info('Rappel->Déconnecté de[%s]', uri))
+            lambda uri: logger.info('Appel->Déconnecté de[%s]', uri))
         self.disconnected.add_callback(self._disconnected)
         self.link_established.add_callback(
-            lambda uri: logger.info('Rappel->Connecté à[%s]', uri))
+            lambda uri: logger.info('Appel->Connecté à[%s]', uri))
         self.connection_lost.add_callback(
             lambda uri, errmsg: logger.info(
-                'Rappel->Connexion perdue à [%s]: %s', uri, errmsg))
+                'Appel->Connexion perdue à [%s]: %s', uri, errmsg))
         self.connection_failed.add_callback(
             lambda uri, errmsg: logger.info(
-                'Rappel->Echec de connexion à [%s]: %s', uri, errmsg))
+                'Appel->Échec de connexion à [%s]: %s', uri, errmsg))
         self.connection_requested.add_callback(
             lambda uri: logger.info(
-                'Rappel->Connexion démarrée[%s]', uri))
+                'Appel->Connexion démarrée[%s]', uri))
         self.connected.add_callback(
             lambda uri: logger.info(
-                'Rappel->Mise en route de la connexion terminée[%s]', uri))
+                'Appel->Mise en route de la connexion terminée[%s]', uri))
                 
     def _disconnected(self, link_uri):
         """ Callback when disconnected."""
@@ -159,7 +159,7 @@ class Crazyflie():
 
     def _param_toc_updated_cb(self):
         """Called when the param TOC has been fully updated"""
-        logger.info('Param TOC finished updating')
+        logger.info('Fin de la mise à jour de la TdM des paramètres')
         self.connected_ts = datetime.datetime.now()
         self.connected.call(self.link_uri)
         # Trigger the update for all the parameters
@@ -167,17 +167,17 @@ class Crazyflie():
 
     def _mems_updated_cb(self):
         """Called when the memories have been identified"""
-        logger.info('Memories finished updating')
+        logger.info('Fin de la mise à jour des mémoires')
         self.param.refresh_toc(self._param_toc_updated_cb, self._toc_cache)
 
     def _log_toc_updated_cb(self):
         """Called when the log TOC has been fully updated"""
-        logger.info('Log TOC finished updating')
+        logger.info('Fin de la mise à jour de la TdM de télémétrie')
         self.mem.refresh(self._mems_updated_cb)
 
     def _link_error_cb(self, errmsg):
         """Called from the link driver when there's an error"""
-        logger.warning('Got link error callback [%s] in state [%s]',
+        logger.warning('Récupéré erreur d\'appel [%s] dans l\'état [%s]',
                        errmsg, self.state)
         if (self.link is not None):
             self.link.close()
@@ -218,7 +218,7 @@ class Crazyflie():
                 link_uri, self._link_quality_cb, self._link_error_cb)
 
             if not self.link:
-                message = 'No driver found or malformed URI: {}' \
+                message = 'Aucun pilote disponible ou bien URI mal formée : {}' \
                     .format(link_uri)
                 logger.warning(message)
                 self.connection_failed.call(link_uri, message)
@@ -234,9 +234,9 @@ class Crazyflie():
             # it in the user interface
             import traceback
 
-            logger.error("Couldn't load link driver: %s\n\n%s",
+            logger.error("Impossible de charger le pilote de liaison : %s\n\n%s",
                          ex, traceback.format_exc())
-            exception_text = "Couldn't load link driver: %s\n\n%s" % (
+            exception_text = "Impossible de charger le pilote de liaison : %s\n\n%s" % (
                 ex, traceback.format_exc())
             if self.link:
                 self.link.close()
@@ -245,7 +245,7 @@ class Crazyflie():
 
     def close_link(self):
         """Close the communication link."""
-        logger.info('Closing link')
+        logger.info('Fermeture de la liaison')
         if (self.link is not None):
             self.commander.send_setpoint(0, 0, 0, 0)
         if (self.link is not None):
@@ -264,7 +264,7 @@ class Crazyflie():
 
     def _no_answer_do_retry(self, pk, pattern):
         """Resend packets that we have not gotten answers to"""
-        logger.info('Resending for pattern %s', pattern)
+        logger.info('Réenvoi du motif %s', pattern)
         # Set the timer to None before trying to send again
         self.send_packet(pk, expected_reply=pattern, resend=True)
 
@@ -278,12 +278,12 @@ class Crazyflie():
         if len(self._answer_patterns) > 0:
             data = (pk.header,) + tuple(pk.data)
             for p in list(self._answer_patterns.keys()):
-                logger.debug('Looking for pattern match on %s vs %s', p, data)
+                logger.debug('Recherche d\'un motif %s adéquat pour %s', p, data)
                 if len(p) <= len(data):
                     if p == data[0:len(p)]:
                         match = data[0:len(p)]
                         if len(match) >= len(longest_match):
-                            logger.debug('Found new longest match %s', match)
+                            logger.debug('Trouvé une nouvelle plus longue coïncidence %s', match)
                             longest_match = match
         if len(longest_match) > 0:
             self._answer_patterns[longest_match].cancel()
@@ -304,7 +304,7 @@ class Crazyflie():
                     self.link.needs_resending:
                 pattern = (pk.header,) + expected_reply
                 logger.debug(
-                    'Sending packet and expecting the %s pattern back',
+                    'Envoi d\'un paquet et attente du motif de retour %s',
                     pattern)
                 new_timer = Timer(timeout,
                                   lambda: self._no_answer_do_retry(pk,
@@ -315,7 +315,7 @@ class Crazyflie():
                 # Check if we have gotten an answer, if not try again
                 pattern = expected_reply
                 if pattern in self._answer_patterns:
-                    logger.debug('We want to resend and the pattern is there')
+                    logger.debug('Nous voulons réenvoyer et le motif est là')
                     if self._answer_patterns[pattern]:
                         new_timer = Timer(timeout,
                                           lambda:
@@ -324,7 +324,7 @@ class Crazyflie():
                         self._answer_patterns[pattern] = new_timer
                         new_timer.start()
                 else:
-                    logger.debug('Resend requested, but no pattern found: %s',
+                    logger.debug('Réenvoi requis mais aucun motif %s trouvé %s',
                                  self._answer_patterns)
             self.link.send_packet(pk)
             self.packet_sent.call(pk)
@@ -345,12 +345,12 @@ class _IncomingPacketHandler(Thread):
 
     def add_port_callback(self, port, cb):
         """Add a callback for data that comes on a specific port"""
-        logger.debug('Adding callback on port [%d] to [%s]', port, cb)
+        logger.debug('Ajout d\'un appel [%d] à [%s]', port, cb)
         self.add_header_callback(cb, port, 0, 0xff, 0x0)
 
     def remove_port_callback(self, port, cb):
         """Remove a callback for data that comes on a specific port"""
-        logger.debug('Removing callback on port [%d] to [%s]', port, cb)
+        logger.debug('Suppression d\'un appel [%d] à [%s]', port, cb)
         for port_callback in self.cb:
             if port_callback.port == port and port_callback.callback == cb:
                 self.cb.remove(port_callback)
@@ -390,7 +390,7 @@ class _IncomingPacketHandler(Thread):
                     # the callbacks.
                     import traceback
 
-                    logger.error('Exception while doing callback on port'
+                    logger.error('Exception lors d\'un appel sur le port'
                                  ' [%d]\n\n%s', pk.port,
                                  traceback.format_exc())
                 if cb.port != 0xFF:

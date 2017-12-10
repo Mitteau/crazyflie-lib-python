@@ -86,15 +86,15 @@ class MemoryElement(object):
         if t == MemoryElement.TYPE_I2C:
             return 'I2C'
         if t == MemoryElement.TYPE_1W:
-            return '1-wire'
+            return 'OW 1-wire'
         if t == MemoryElement.TYPE_DRIVER_LED:
             return 'LED driver'
         if t == MemoryElement.TYPE_LOCO:
-            return 'Loco Positioning'
-        return 'Unknown'
+            return 'LPS'
+        return 'Inconnu'
 
     def new_data(self, mem, addr, data):
-        logger.info('New data, but not OW mem')
+        logger.info('Nouvelles données mais aucune mémoire OW')
 
     def __str__(self):
         """Generate debug string for memory"""
@@ -139,7 +139,7 @@ class LEDDriverMemory(MemoryElement):
     def new_data(self, mem, addr, data):
         """Callback for when new memory data has been fetched"""
         if mem.id == self.id:
-            logger.info("Got new data from the LED driver, but we don't care.")
+            logger.info("Nouvelles données obtenues du pilote de LEDs, peu importe.")
 
     def write_data(self, write_finished_cb):
         """Write the saved LED-ring data to the Crazyflie"""
@@ -166,13 +166,13 @@ class LEDDriverMemory(MemoryElement):
         if not self._update_finished_cb:
             self._update_finished_cb = update_finished_cb
             self.valid = False
-            logger.info('Updating content of memory {}'.format(self.id))
+            logger.info('Mise à jour du contenu de la mémoire {}'.format(self.id))
             # Start reading the header
             self.mem_handler.read(self, 0, 16)
 
     def write_done(self, mem, addr):
         if self._write_finished_cb and mem.id == self.id:
-            logger.info('Write to LED driver done')
+            logger.info('Écriture sur le pilote de LED effectuée')
             self._write_finished_cb(self, addr)
             self._write_finished_cb = None
 
@@ -198,7 +198,7 @@ class I2CElement(MemoryElement):
                 done = False
                 # Check for header
                 if data[0:4] == EEPROM_TOKEN:
-                    logger.info('Got new data: {}'.format(data))
+                    logger.info('Reçu de nouvelles informations : {}'.format(data))
                     [self.elements['version'],
                      self.elements['radio_channel'],
                      self.elements['radio_speed'],
@@ -267,7 +267,7 @@ class I2CElement(MemoryElement):
         if not self._update_finished_cb:
             self._update_finished_cb = update_finished_cb
             self.valid = False
-            logger.info('Updating content of memory {}'.format(self.id))
+            logger.info('Mise à jour du contenu de la mémoire {}'.format(self.id))
             # Start reading the header
             self.mem_handler.read(self, 0, 16)
 
@@ -399,7 +399,7 @@ class OWElement(MemoryElement):
         if not self._update_finished_cb:
             self._update_finished_cb = update_finished_cb
             self.valid = False
-            logger.info('Updating content of memory {}'.format(self.id))
+            logger.info('Mise à jour du contenu de la mémoire {}'.format(self.id))
             # Start reading the header
             self.mem_handler.read(self, 0, 11)
 
@@ -490,7 +490,7 @@ class LocoMemory(MemoryElement):
             self.anchor_data = []
             self.nr_of_anchors = 0
             self.valid = False
-            logger.info('Updating content of memory {}'.format(self.id))
+            logger.info('Mise à jour du contenu de la mémoire {}'.format(self.id))
 
             # Start reading the header
             self.mem_handler.read(self, LocoMemory.MEM_LOCO_INFO,
@@ -527,7 +527,7 @@ class _ReadRequest:
         self._request_new_chunk()
 
     def resend(self):
-        logger.info('Sending write again...')
+        logger.info('Réenvoi de l\'ordre d\'écriture...')
         self._request_new_chunk()
 
     def _request_new_chunk(self):
@@ -539,7 +539,7 @@ class _ReadRequest:
         if new_len > _ReadRequest.MAX_DATA_LENGTH:
             new_len = _ReadRequest.MAX_DATA_LENGTH
 
-        logger.info('Requesting new chunk of {}bytes at 0x{:X}'.format(
+        logger.info('Demande d\'un nouveau paquet de données de {}octets à 0x{:X}'.format(
             new_len, self._current_addr))
 
         # Request the data for the next address
@@ -554,7 +554,7 @@ class _ReadRequest:
         data_len = len(data)
         if not addr == self._current_addr:
             logger.warning(
-                'Address did not match when adding data to read request!')
+                'L\'adresse ne convient pas dans la requête de demande de données !')
             return
 
         # Add the data and calculate the next address to fetch
@@ -597,7 +597,7 @@ class _WriteRequest:
         self._write_new_chunk()
 
     def resend(self):
-        logger.info('Sending write again...')
+        logger.info('Réenvoi de l\'ordre d\'écriture...')
         self.cf.send_packet(
             self._sent_packet, expected_reply=self._sent_reply, timeout=1)
 
@@ -610,7 +610,7 @@ class _WriteRequest:
         if new_len > _WriteRequest.MAX_DATA_LENGTH:
             new_len = _WriteRequest.MAX_DATA_LENGTH
 
-        logger.info('Writing new chunk of {}bytes at 0x{:X}'.format(
+        logger.info('Écriture d\'un nouveau paquet de données de {}octets à 0x{:X}'.format(
             new_len, self._current_addr))
 
         data = self._data[:new_len]
@@ -633,7 +633,7 @@ class _WriteRequest:
         """Callback when data is received from the Crazyflie"""
         if not addr == self._current_addr:
             logger.warning(
-                'Address did not match when adding data to read request!')
+                'L\'adresse ne convient pas dans la requête d\'ecriture de données !')
             return
 
         if len(self._data) > 0:
@@ -641,7 +641,7 @@ class _WriteRequest:
             self._write_new_chunk()
             return False
         else:
-            logger.info('This write request is done')
+            logger.info('Requête d\'écriture effectuée')
             return True
 
 
@@ -652,11 +652,11 @@ class Memory():
     # some of the text messages will look very strange
     # in the UI, so they are redefined here
     _err_codes = {
-        errno.ENOMEM: 'No more memory available',
-        errno.ENOEXEC: 'Command not found',
-        errno.ENOENT: 'No such block id',
-        errno.E2BIG: 'Block too large',
-        errno.EEXIST: 'Block already exists'
+        errno.ENOMEM: 'Mémoire insuffisante',
+        errno.ENOEXEC: 'La commandande n\'existe pas',
+        errno.ENOENT: 'Pas de bloc avec l\'identité donnée',
+        errno.E2BIG: 'Bloc trop grand',
+        errno.EEXIST: 'Le bloc existe déjà'
     }
 
     def __init__(self, crazyflie=None):
@@ -751,8 +751,8 @@ class Memory():
         address
         """
         if memory.id in self._read_requests:
-            logger.warning('There is already a read operation ongoing for '
-                           'memory id {}'.format(memory.id))
+            logger.warning('Une opération de lecture est déjà en cours pour '
+                           'la mémoire {}'.format(memory.id))
             return False
 
         rreq = _ReadRequest(memory, addr, length, self.cf)
@@ -772,13 +772,13 @@ class Memory():
                 m.disconnect()
             except Exception as e:
                 logger.info(
-                    'Error when removing memory after update: {}'.format(e))
+                    'Erreur dans la suppression de la mémoire après mise à jour : {}'.format(e))
         self.mems = []
 
         self.nbr_of_mems = 0
         self._getting_count = False
 
-        logger.info('Requesting number of memories')
+        logger.info('Demande du nombre de mémoires')
         pk = CRTPPacket()
         pk.set_header(CRTPPort.MEM, CHAN_INFO)
         pk.data = (CMD_INFO_NBR,)
@@ -791,7 +791,7 @@ class Memory():
                 m.disconnect()
             except Exception as e:
                 logger.info(
-                    'Error when resetting after disconnect: {}'.format(e))
+                    'Erreur lors de la reprise après déconnexion : {}'.format(e))
 
     def _new_packet_cb(self, packet):
         """Callback for newly arrived packets for the memory port"""
@@ -802,14 +802,14 @@ class Memory():
         if chan == CHAN_INFO:
             if cmd == CMD_INFO_NBR:
                 self.nbr_of_mems = payload[0]
-                logger.info('{} memories found'.format(self.nbr_of_mems))
+                logger.info('{} mémoires trouvées'.format(self.nbr_of_mems))
 
                 # Start requesting information about the memories,
                 # if there are any...
                 if self.nbr_of_mems > 0:
                     if not self._getting_count:
                         self._getting_count = True
-                        logger.info('Requesting first id')
+                        logger.info('Requête d\'un premier indice')
                         pk = CRTPPacket()
                         pk.set_header(CRTPPort.MEM, CHAN_INFO)
                         pk.data = (CMD_INFO_DETAILS, 0)
@@ -827,7 +827,7 @@ class Memory():
                     # the 1-wire. Fail by saying we only found 1 memory
                     # (the I2C).
                     logger.error(
-                        '-------->Got good count, but no info on mem!')
+                        '-------->Bon comptage, mais pas d\'information sur cette mémoire !')
                     self.nbr_of_mems = 1
                     if self._refresh_callback:
                         self._refresh_callback()
@@ -884,7 +884,7 @@ class Memory():
 
                 if self.nbr_of_mems - 1 >= self._fetch_id:
                     logger.info(
-                        'Requesting information about memory {}'.format(
+                        'Demande d\'information sur la mémoire {}'.format(
                             self._fetch_id))
                     pk = CRTPPacket()
                     pk.set_header(CRTPPort.MEM, CHAN_INFO)
@@ -893,7 +893,7 @@ class Memory():
                         CMD_INFO_DETAILS, self._fetch_id))
                 else:
                     logger.info(
-                        'Done getting all the memories, start reading the OWs')
+                        'Obtention des valeurs des mémoires effectuée, début de lecture des OWs')
                     ows = self.get_mems(MemoryElement.TYPE_1W)
                     # If there are any OW mems start reading them, otherwise
                     # we are done
@@ -908,7 +908,7 @@ class Memory():
             id = cmd
             (addr, status) = struct.unpack('<IB', payload[0:5])
             logger.info(
-                'WRITE: Mem={}, addr=0x{:X}, status=0x{}'.format(
+                'ÉCRIRE: Mem={}, addr=0x{:X}, status=0x{}'.format(
                     id, addr, status))
             # Find the read request
             if id in self._write_requests:
@@ -925,7 +925,7 @@ class Memory():
                         if len(self._write_requests[id]) > 0:
                             self._write_requests[id][0].start()
                 else:
-                    logger.info('Status {}: write resending...'.format(status))
+                    logger.info('Situation {}: réenvoi d\'écriture...'.format(status))
                     wreq.resend()
                 self._write_requests_lock.release()
 
@@ -933,18 +933,18 @@ class Memory():
             id = cmd
             (addr, status) = struct.unpack('<IB', payload[0:5])
             data = struct.unpack('B' * len(payload[5:]), payload[5:])
-            logger.info('READ: Mem={}, addr=0x{:X}, status=0x{}, '
+            logger.info('LIRE: Mem={}, addr=0x{:X}, status=0x{}, '
                         'data={}'.format(id, addr, status, data))
             # Find the read request
             if id in self._read_requests:
                 logger.info(
-                    'READING: We are still interested in request for '
-                    'mem {}'.format(id))
+                    'LECTURE: toujours en attente de la requête sur la '
+                    'mémoire {}'.format(id))
                 rreq = self._read_requests[id]
                 if status == 0:
                     if rreq.add_data(addr, payload[5:]):
                         self._read_requests.pop(id, None)
                         self.mem_read_cb.call(rreq.mem, rreq.addr, rreq.data)
                 else:
-                    logger.info('Status {}: resending...'.format(status))
+                    logger.info('Situation {}: réenvoi ...'.format(status))
                     rreq.resend()

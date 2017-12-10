@@ -63,7 +63,7 @@ class Swarm:
         Open links to all individuals in the swarm
         """
         if self._is_open:
-            raise Exception('Already opened')
+            raise Exception('Déjà ouvert')
 
         try:
             self.parallel_safe(lambda scf: scf.open_link())
@@ -161,8 +161,7 @@ class Swarm:
             thread.join()
 
         if reporter.is_error_reported():
-            raise Exception('One or more threads raised an exception when '
-                            'executing parallel task')
+          raise Exception('un ou plusieurs threads génèrent une exception quand on exécute une tache parallèle')
 
     def _thread_function_wrapper(self, *args):
         try:

@@ -129,7 +129,7 @@ class CRTPPacket(object):
         elif sys.version_info >= (3,) and type(data) == bytes:
             self._data = bytearray(data)
         else:
-            raise Exception('Les données doivent être soit des "bytearray", soit des chaînes, listes ou tuples,'
+            raise Exception('Les données doivent être soit des "bytearray", soit des chaînes, listes ou tuples python,'
                             ' pas des {}'.format(type(data)))
 
     def _get_data_l(self):

@@ -181,7 +181,7 @@ class Param():
                 self.values[element.group] = {}
             self.values[element.group][element.name] = s
 
-            logger.debug('Updated parameter [%s]' % complete_name)
+            logger.debug('Mise à jour du paramètre [%s]' % complete_name)
             if complete_name in self.param_update_callbacks:
                 self.param_update_callbacks[complete_name].call(
                     complete_name, s)
@@ -197,7 +197,7 @@ class Param():
                 self.is_updated = True
                 self.all_updated.call()
         else:
-            logger.debug('Variable id [%d] not found in TOC', var_id)
+            logger.debug('La variable id [%d] n\'a pas été trouvée dans la TdM', var_id)
 
     def remove_update_callback(self, group, name=None, cb=None):
         """Remove the supplied callback for a group or a group.name"""
@@ -260,13 +260,13 @@ class Param():
         element = self.toc.get_element_by_complete_name(complete_name)
 
         if not element:
-            logger.warning("Cannot set value for [%s], it's not in the TOC!",
+            logger.warning("Une valeur pour [%s] ne peut être donnée, la variable n\'est pas dans la TdM !",
                            complete_name)
-            raise KeyError('{} not in param TOC'.format(complete_name))
+            raise KeyError('{} n\'est pas dans la TdM'.format(complete_name))
         elif element.access == ParamTocElement.RO_ACCESS:
-            logger.debug('[%s] is read only, no trying to set value',
+            logger.debug('[%s] est en lecture seule, on ne peut changer la valeur',
                          complete_name)
-            raise AttributeError('{} is read-only!'.format(complete_name))
+            raise AttributeError('{} est en lecture seule !'.format(complete_name))
         else:
             varid = element.ident
             pk = CRTPPacket()
@@ -326,7 +326,7 @@ class _ParamUpdater(Thread):
         pk = CRTPPacket()
         pk.set_header(CRTPPort.PARAM, READ_CHANNEL)
         pk.data = struct.pack('<B', var_id)
-        logger.debug('Requesting request to update param [%d]', var_id)
+        logger.debug('Requête de mise à jour du paramètre [%d]', var_id)
         self.request_queue.put(pk)
 
     def run(self):

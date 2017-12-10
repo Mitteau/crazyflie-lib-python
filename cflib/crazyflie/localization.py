@@ -74,8 +74,8 @@ class Localization():
         Callback for data received from the copter.
         """
         if len(packet.data) < 1:
-            logger.warning('Localization packet received with incorrect' +
-                           'length (length is {})'.format(len(packet.data)))
+            logger.warning('La longueur du paquet reçu est incorrecte' +
+                           '(la longueur est {})'.format(len(packet.data)))
             return
 
         pk_type = struct.unpack('<B', packet.data[:1])[0]
@@ -86,7 +86,7 @@ class Localization():
         decoded_data = None
         if pk_type == self.RANGE_STREAM_REPORT:
             if len(data) % 5 != 0:
-                logger.error('Wrong range stream report data lenght')
+                logger.error('Longueur incorrecte du message de flux d\'écart')
                 return
             decoded_data = {}
             raw_data = data

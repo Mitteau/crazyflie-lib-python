@@ -156,7 +156,7 @@ class RadioDriver(CRTPDriver):
         # Open the USB dongle
         if not re.search('^radio://([0-9]+)((/([0-9]+))'
                          '((/(250K|1M|2M))?(/([A-F0-9]+))?)?)?$', uri):
-            raise WrongUriType('Mauvais format d\'URI radio! ')
+            raise WrongUriType('Mauvais format d\'URI radio !')
 
         uri_data = re.search('^radio://([0-9]+)((/([0-9]+))'
                              '((/(250K|1M|2M))?(/([A-F0-9]+))?)?)?$', uri)

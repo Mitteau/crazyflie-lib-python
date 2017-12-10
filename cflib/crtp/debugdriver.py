@@ -717,7 +717,7 @@ class _PacketHandlingThread(Thread):
                     # TODO: Send back error code
             if (cmd == 4):
                 blockId = pk.data[1]
-                logger.info('Télémétrie : pause du bloc %d', blockId)
+                logger.info('Télémétrie : pause sur le bloc %d', blockId)
                 success = False
                 for fb in self.fakeLoggingThreads:
                     if (fb.blockId == blockId):
@@ -726,7 +726,7 @@ class _PacketHandlingThread(Thread):
                         p.set_header(5, 1)
                         p.data = struct.pack('<BBB', cmd, blockId, 0x00)
                         self._send_packet(p)
-                        logger.info('Télémétrie : pause du bloc %d', blockId)
+                        logger.info('Télémétrie : pause sur le bloc %d', blockId)
                         success = True
                 if (success is False):
                     logger.warning('Télémétrie : impossible de stopper le bloc=%d, qui est introuvable',

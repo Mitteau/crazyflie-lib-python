@@ -62,7 +62,7 @@ class SyncLogger:
 
     def connect(self):
         if self._is_connected:
-            raise Exception('Already connected')
+            raise Exception('déjà connecté')
 
         self._cf.disconnected.add_callback(self._disconnected)
         self._log_config.data_received_cb.add_callback(self._log_callback)

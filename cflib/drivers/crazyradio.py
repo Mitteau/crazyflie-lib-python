@@ -137,7 +137,7 @@ class Crazyradio:
             raise 'Ce pilote nécessite le logiciel Crazyradio V0.3+'
 
         if self.version < 0.4:
-            logger.warning('Vous devriez actualiserver le logiciel Crazyradio V0.4+')
+            logger.warning('Vous devriez actualiser vers le logiciel Crazyradio V0.4+')
 
         # Reset the dongle to power up settings
         self.set_data_rate(self.DR_2MPS)

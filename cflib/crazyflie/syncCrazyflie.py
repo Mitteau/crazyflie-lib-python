@@ -56,9 +56,9 @@ class SyncCrazyflie:
 
     def open_link(self):
         if (self.is_link_open()):
-            raise Exception('Link already open')
+            raise Exception('lien déjà ouvert')
 
-        print('Connecting to %s' % self._link_uri)
+        print('Connexion à %s' % self._link_uri)
         self.cf.open_link(self._link_uri)
         self._connect_event.wait()
         if not self._is_link_open:
@@ -81,14 +81,14 @@ class SyncCrazyflie:
     def _connected(self, link_uri):
         """ This callback is called form the Crazyflie API when a Crazyflie
         has been connected and the TOCs have been downloaded."""
-        print('Connected to %s' % link_uri)
+        print('Connecté à %s' % link_uri)
         self._is_link_open = True
         self._connect_event.set()
 
     def _connection_failed(self, link_uri, msg):
         """Callback when connection initial connection fails (i.e no Crazyflie
         at the specified address)"""
-        print('Connection to %s failed: %s' % (link_uri, msg))
+        print('Échec de la connexion %s : %s' % (link_uri, msg))
         self._is_link_open = False
         self._error_message = msg
         self._connect_event.set()
